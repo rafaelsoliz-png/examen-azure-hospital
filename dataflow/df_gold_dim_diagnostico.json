@@ -1,0 +1,60 @@
+{
+	"name": "df_gold_dim_diagnostico",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_silver_diagnoses",
+						"type": "DatasetReference"
+					},
+					"name": "SourceSilverDiagnoses"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_gold_dim_diagnostico",
+						"type": "DatasetReference"
+					},
+					"name": "SinkGoldDimDiagnostico"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          codigo_icd as string,",
+				"          descripcion_patologia as string,",
+				"          nivel_severidad as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    LTRIM(RTRIM(icd_code)) AS codigo_icd,\\n    MAX(LTRIM(RTRIM(diagnosis_description))) AS descripcion_patologia,\\n    COALESCE(NULLIF(LTRIM(RTRIM(severity)), \\'\\'), \\'No Especificado\\') AS nivel_severidad\\nFROM silver.diagnoses\\nWHERE icd_code IS NOT NULL\\nGROUP BY\\n    LTRIM(RTRIM(icd_code)),\\n    COALESCE(NULLIF(LTRIM(RTRIM(severity)), \\'\\'), \\'No Especificado\\')',",
+				"     format: 'query') ~> SourceSilverDiagnoses",
+				"SourceSilverDiagnoses sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          diagnostico_key as integer,",
+				"          codigo_icd as string,",
+				"          descripcion_patologia as string,",
+				"          nivel_severidad as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          codigo_icd,",
+				"          descripcion_patologia,",
+				"          nivel_severidad",
+				"     )) ~> SinkGoldDimDiagnostico"
+			]
+		}
+	}
+}

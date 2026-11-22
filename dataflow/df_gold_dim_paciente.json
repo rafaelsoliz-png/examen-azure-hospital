@@ -1,0 +1,75 @@
+{
+	"name": "df_gold_dim_paciente",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_silver_patients",
+						"type": "DatasetReference"
+					},
+					"name": "SourceSilverPatients"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_gold_dim_paciente",
+						"type": "DatasetReference"
+					},
+					"name": "SinkGoldDimPaciente"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          patient_id_bk as integer,",
+				"          nombre_completo as string,",
+				"          genero as string,",
+				"          fecha_nacimiento as date,",
+				"          rango_etario as string,",
+				"          correo_electronico as string,",
+				"          direccion as string,",
+				"          proveedor_seguro as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    patient_id AS patient_id_bk,\\n    LTRIM(RTRIM(full_name)) AS nombre_completo,\\n    CASE\\n        WHEN LOWER(LTRIM(RTRIM(gender))) IN (\\'m\\', \\'male\\', \\'masculino\\') THEN \\'Masculino\\'\\n        WHEN LOWER(LTRIM(RTRIM(gender))) IN (\\'f\\', \\'female\\', \\'femenino\\') THEN \\'Femenino\\'\\n        ELSE \\'Otro\\'\\n    END AS genero,\\n    date_of_birth AS fecha_nacimiento,\\n    CASE\\n        WHEN date_of_birth IS NULL THEN NULL\\n        WHEN DATEDIFF(YEAR, date_of_birth, GETDATE()) <= 18 THEN \\'0-18\\'\\n        WHEN DATEDIFF(YEAR, date_of_birth, GETDATE()) <= 35 THEN \\'19-35\\'\\n        WHEN DATEDIFF(YEAR, date_of_birth, GETDATE()) <= 60 THEN \\'36-60\\'\\n        ELSE \\'60+\\'\\n    END AS rango_etario,\\n    LTRIM(RTRIM(email)) AS correo_electronico,\\n    LTRIM(RTRIM(address)) AS direccion,\\n    COALESCE(NULLIF(LTRIM(RTRIM(insurance_provider)), \\'\\'), \\'Sin Seguro\\') AS proveedor_seguro\\nFROM silver.patients',",
+				"     format: 'query') ~> SourceSilverPatients",
+				"SourceSilverPatients sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          paciente_key as integer,",
+				"          patient_id_bk as integer,",
+				"          nombre_completo as string,",
+				"          genero as string,",
+				"          fecha_nacimiento as date,",
+				"          rango_etario as string,",
+				"          correo_electronico as string,",
+				"          direccion as string,",
+				"          proveedor_seguro as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          patient_id_bk,",
+				"          nombre_completo,",
+				"          genero,",
+				"          fecha_nacimiento,",
+				"          rango_etario,",
+				"          correo_electronico,",
+				"          direccion,",
+				"          proveedor_seguro",
+				"     )) ~> SinkGoldDimPaciente"
+			]
+		}
+	}
+}
