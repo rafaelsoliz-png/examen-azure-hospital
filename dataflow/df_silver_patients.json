@@ -42,7 +42,7 @@
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> SourceBronzePatients",
 				"SourceBronzePatients derive(patient_id = toInteger(patient_id),",
-				"          date_of_birth = toDate(date_of_birth)) ~> CleanAndCastPatients",
+				"          date_of_birth = coalesce(toDate(date_of_birth, 'yyyy-MM-dd'), toDate(date_of_birth, 'MM-dd-yy'), toDate(date_of_birth, 'MM/dd/yyyy'), toDate(date_of_birth, 'dd-MMM-yyyy'), toDate(date_of_birth, 'MMMM dd, yyyy'))) ~> CleanAndCastPatients",
 				"CleanAndCastPatients sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
