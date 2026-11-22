@@ -1,0 +1,71 @@
+{
+	"name": "df_silver_diagnoses",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_bronze_diagnoses",
+						"type": "DatasetReference"
+					},
+					"name": "SourceBronzeDiagnoses"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_silver_diagnoses",
+						"type": "DatasetReference"
+					},
+					"name": "SinkSilverDiagnoses"
+				}
+			],
+			"transformations": [
+				{
+					"name": "CleanAndCastDiagnoses"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          diagnosis_id as string,",
+				"          admission_id as string,",
+				"          icd_code as string,",
+				"          diagnosis_description as string,",
+				"          severity as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> SourceBronzeDiagnoses",
+				"SourceBronzeDiagnoses derive(diagnosis_id = toInteger(diagnosis_id),",
+				"          admission_id = toInteger(admission_id)) ~> CleanAndCastDiagnoses",
+				"CleanAndCastDiagnoses sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          diagnosis_id as integer,",
+				"          admission_id as integer,",
+				"          icd_code as string,",
+				"          diagnosis_description as string,",
+				"          severity as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     truncate:true,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          diagnosis_id,",
+				"          admission_id,",
+				"          icd_code,",
+				"          diagnosis_description,",
+				"          severity",
+				"     )) ~> SinkSilverDiagnoses"
+			]
+		}
+	}
+}
