@@ -12,14 +12,9 @@
 		"type": "AzureSqlTable",
 		"schema": [
 			{
-				"name": "facturacion_key",
+				"name": "admision_key",
 				"type": "bigint",
 				"precision": 19
-			},
-			{
-				"name": "billing_id_bk",
-				"type": "int",
-				"precision": 10
 			},
 			{
 				"name": "admission_id_bk",
@@ -37,30 +32,39 @@
 				"precision": 10
 			},
 			{
-				"name": "servicio_cargo_key",
+				"name": "diagnostico_key",
 				"type": "int",
 				"precision": 10
 			},
 			{
-				"name": "fecha_pago_key",
+				"name": "fecha_ingreso_key",
 				"type": "int",
 				"precision": 10
 			},
 			{
-				"name": "monto_facturado",
-				"type": "decimal",
-				"precision": 12,
-				"scale": 2
+				"name": "fecha_alta_key",
+				"type": "int",
+				"precision": 10
 			},
 			{
-				"name": "conteo_transacciones",
+				"name": "medico_id",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "dias_estancia",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "conteo_admisiones",
 				"type": "int",
 				"precision": 10
 			}
 		],
 		"typeProperties": {
 			"schema": "gold",
-			"table": "fact_facturacion"
+			"table": "fact_admisiones"
 		}
 	}
 }

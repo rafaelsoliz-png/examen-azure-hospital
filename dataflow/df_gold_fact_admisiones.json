@@ -1,0 +1,78 @@
+{
+	"name": "df_gold_fact_admisiones",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_silver_admissions",
+						"type": "DatasetReference"
+					},
+					"name": "SourceFactAdmisiones"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_gold_fact_admisiones",
+						"type": "DatasetReference"
+					},
+					"name": "SinkGoldFactAdmisiones"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          admission_id_bk as integer,",
+				"          paciente_key as integer,",
+				"          departamento_key as integer,",
+				"          diagnostico_key as integer,",
+				"          fecha_ingreso_key as integer,",
+				"          fecha_alta_key as integer,",
+				"          medico_id as integer,",
+				"          dias_estancia as integer,",
+				"          conteo_admisiones as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    a.admission_id AS admission_id_bk,\\n    dp.paciente_key,\\n    ddep.departamento_key,\\n    dd.diagnostico_key,\\n    dfi.fecha_key AS fecha_ingreso_key,\\n    dfa.fecha_key AS fecha_alta_key,\\n    a.attending_doctor_id AS medico_id,\\n    DATEDIFF(DAY, a.admission_date, a.discharge_date) AS dias_estancia,\\n    1 AS conteo_admisiones\\nFROM silver.admissions a\\nINNER JOIN silver.diagnoses d\\n    ON a.admission_id = d.admission_id\\nINNER JOIN gold.dim_paciente dp\\n    ON a.patient_id = dp.patient_id_bk\\nINNER JOIN gold.dim_departamento ddep\\n    ON LTRIM(RTRIM(a.department)) = ddep.nombre_departamento\\nINNER JOIN gold.dim_diagnostico dd\\n    ON LTRIM(RTRIM(d.icd_code)) = dd.codigo_icd\\n    AND COALESCE(NULLIF(LTRIM(RTRIM(d.severity)), \\'\\'), \\'No Especificado\\') = dd.nivel_severidad\\nINNER JOIN gold.dim_fecha dfi\\n    ON a.admission_date = dfi.fecha_completa\\nLEFT JOIN gold.dim_fecha dfa\\n    ON a.discharge_date = dfa.fecha_completa',",
+				"     format: 'query') ~> SourceFactAdmisiones",
+				"SourceFactAdmisiones sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          admision_key as long,",
+				"          admission_id_bk as integer,",
+				"          paciente_key as integer,",
+				"          departamento_key as integer,",
+				"          diagnostico_key as integer,",
+				"          fecha_ingreso_key as integer,",
+				"          fecha_alta_key as integer,",
+				"          medico_id as integer,",
+				"          dias_estancia as integer,",
+				"          conteo_admisiones as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          admission_id_bk,",
+				"          paciente_key,",
+				"          departamento_key,",
+				"          diagnostico_key,",
+				"          fecha_ingreso_key,",
+				"          fecha_alta_key,",
+				"          medico_id,",
+				"          dias_estancia,",
+				"          conteo_admisiones",
+				"     )) ~> SinkGoldFactAdmisiones"
+			]
+		}
+	}
+}
